@@ -1,5 +1,6 @@
 # Lightweight Clustered Federated Learning via Feature Extraction 
 
+## How to run the code
 ### Prepare the dataset
 ```bash
 cd scripts
@@ -19,9 +20,9 @@ For Tiny-ImageNet, you should download the dataset from [here](http://cs231n.sta
 The directory structure of the datasets should look like this:
 
 ```
-FECFL-->data-->cinic10-->data-->train
-                |                |->test
-                |                |->valid
+FECFL-->data-->cinic10-->train
+                |       |->test
+                |       |->valid
                 |->tiny-imagenet-200-->train
                 |                     |->val
                 |                     |->test
@@ -47,4 +48,17 @@ bash fecfl_unsupervised.sh
 ```bash
 cd distribution_shift
 bash fecfl_shift.sh
+```
+
+## Citation
+If you find this code useful, please consider citing our paper:
+```bibtex
+@inproceedings{lao2025lightweight,
+  title={Lightweight Clustered Federated Learning via Feature Extraction},
+  author={Lao, Guanzhang and Zhang, Xinglin and Li, Yun and Gong, Yue-Jiao},
+  booktitle={ICASSP 2025-2025 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
+  pages={1--5},
+  year={2025},
+  organization={IEEE}
+}
 ```
