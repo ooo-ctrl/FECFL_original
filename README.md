@@ -1,5 +1,8 @@
 # Lightweight Clustered Federated Learning via Feature Extraction 
 
+## Framework
+![framework](./framework.png)
+
 ## How to run the code
 ### Prepare the dataset
 ```bash
