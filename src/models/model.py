@@ -6,9 +6,9 @@ from torchvision import models
 
 
 class SimpleCNN(nn.Module):
-    def __init__(self, input_dim, hidden_dims, output_dim=10):
+    def __init__(self, input_dim, hidden_dims, output_dim=10, in_channels=3):
         super(SimpleCNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.conv1 = nn.Conv2d(in_channels, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
 

@@ -20,6 +20,7 @@ from src.data_process_fedlab.stl10.original_stl10 import OriginalSTL10
 from src.data_process_fedlab.tiny.original_tiny import OriginalTINY
 from src.data_process_fedlab.tiny.rotated_tiny import RotatedTINY
 from src.data_process_fedlab.tiny.rgb_hsv_tiny import RGBHSVTINY
+from src.data_process_fedlab.local.local_fingerprint_pairs import LocalFingerprintPairs
 from src.utils import *
 from src.models import *
 from src.models.autoencoders import ConvAE
@@ -142,6 +143,21 @@ def get_datasets(args):
         data_dir = '../data/tiny-imagenet-200'
         save_dir = '../data/tiny_rgb_hsv'
         data_set = RGBHSVTINY(data_dir, save_dir, args.num_users)
+    elif args.dataset == "local_pair" and args.partition == "local":
+        print("dataset = local_pair, partition_method = local")
+        data_dir = args.local_root_dir
+        save_dir = args.local_save_dir
+        data_set = LocalFingerprintPairs(
+            data_dir,
+            save_dir,
+            args.num_users,
+            args.local_dataset_name,
+            seed=args.local_seed,
+            img_size=args.local_img_size,
+            max_pairs_per_class=args.local_max_pairs_per_class,
+            negative_ratio=args.local_negative_ratio,
+            concat_dim=args.local_concat_dim,
+        )
     else:
         raise NotImplementedError
     return data_set
@@ -150,6 +166,13 @@ def get_datasets(args):
 ################################### build model
 def init_nets(args, dropout_p=0.5):
     users_model = []
+
+    def _simple_cnn_input_dim(img_size: int) -> int:
+        conv1 = img_size - 4
+        pool1 = conv1 // 2
+        conv2 = pool1 - 4
+        pool2 = conv2 // 2
+        return 16 * pool2 * pool2
 
     for net_i in range(-1, args.num_users):
         if args.dataset == "generated":
@@ -161,6 +184,10 @@ def init_nets(args, dropout_p=0.5):
                 net = SimpleCNN(input_dim=(16 * 5 * 5), hidden_dims=[120, 84], output_dim=10).to(args.device)
             elif args.dataset in ("mnist", 'fmnist'):
                 net = SimpleCNNMNIST(input_dim=(16 * 4 * 4), hidden_dims=[120, 84], output_dim=10).to(args.device)
+            elif args.dataset == "local_pair":
+                in_ch = 6 if args.local_concat_dim == "channel" else 3
+                input_dim = _simple_cnn_input_dim(args.local_img_size)
+                net = SimpleCNN(input_dim=input_dim, hidden_dims=[120, 84], output_dim=2, in_channels=in_ch).to(args.device)
         elif args.model == 'resnet9':
             if args.dataset == 'cifar100':
                 net = ResNet9(in_channels=3, num_classes=100)
@@ -168,6 +195,9 @@ def init_nets(args, dropout_p=0.5):
                 net = ResNet9(in_channels=3, num_classes=100, dim=4608)
             elif args.dataset == 'tiny':
                 net = ResNet9(in_channels=3, num_classes=200, dim=512 * 2 * 2)
+            elif args.dataset == 'local_pair':
+                in_ch = 6 if args.local_concat_dim == "channel" else 3
+                net = ResNet9(in_channels=in_ch, num_classes=2, dim=512 * 2 * 2)
         elif args.unsupervised:
             net = ConvAE().to(args.device)
         else:

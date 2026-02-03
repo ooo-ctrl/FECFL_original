@@ -23,7 +23,7 @@ class Client_FECFL(object):
         self.ds_test = test_data_local
         self.ldr_train = DataLoader(self.ds_train, batch_size=self.local_bs, shuffle=True, drop_last=True)
         self.ldr_test = DataLoader(self.ds_test, batch_size=self.local_bs, shuffle=False)
-        self.ldr_fe = DataLoader(self.ds_train, batch_size=self.local_bs, shuffle=False, drop_last=True)  # only for FE
+        self.ldr_fe = DataLoader(self.ds_train, batch_size=self.local_bs, shuffle=False, drop_last=False)  # only for FE
         self.acc_best = 0
         self.count = 0
         self.save_best = True
@@ -53,13 +53,18 @@ class Client_FECFL(object):
                 optimizer.step()
                 batch_loss.append(loss.item())
 
-            epoch_loss.append(sum(batch_loss) / len(batch_loss))
+            if len(batch_loss) == 0:
+                epoch_loss.append(0.0)
+            else:
+                epoch_loss.append(sum(batch_loss) / len(batch_loss))
 
         #         if self.save_best:
         #             _, acc = self.eval_test()
         #             if acc > self.acc_best:
         #                 self.acc_best = acc
 
+        if len(epoch_loss) == 0:
+            return 0.0
         return sum(epoch_loss) / len(epoch_loss)
 
     def train_unsupervised(self, epoch=0):
@@ -121,6 +126,8 @@ class Client_FECFL(object):
     def eval_test(self):
         self.net.to(self.device)
         self.net.eval()
+        if len(self.ldr_test.dataset) == 0:
+            return 0.0, 0.0
         test_loss = 0
         correct = 0
         with torch.no_grad():
@@ -153,6 +160,8 @@ class Client_FECFL(object):
     def eval_train(self):
         self.net.to(self.device)
         self.net.eval()
+        if len(self.ldr_train.dataset) == 0:
+            return 0.0, 0.0
         train_loss = 0
         correct = 0
         with torch.no_grad():
@@ -211,9 +220,21 @@ class Client_FECFL(object):
                 data = data.to(self.device)
                 feature = self.net.extract_features(data).cpu().detach().numpy()
                 features.append(feature)
-        # features shape: [batch_num, batch_size(128), feature_dim(256)]
+        if len(features) == 0:
+            if len(self.ds_train) == 0:
+                raise RuntimeError(f"Client {self.name} has empty training dataset; cannot extract features.")
+            data0, _ = self.ds_train[0]
+            if isinstance(data0, np.ndarray):
+                data0 = torch.from_numpy(data0)
+            if data0.dim() == 3:
+                data0 = data0.unsqueeze(0)
+            data0 = data0.to(self.device)
+            feature0 = self.net.extract_features(data0).cpu().detach().numpy()
+            return np.squeeze(feature0, axis=0)
+
+        # features shape: [batch_num, batch_size, feature_dim]
         res = np.average(features, axis=(0, 1))
-        # shape: [feature_dim(256)]
+        # shape: [feature_dim]
         return res
 
     def extract_features_norm(self):

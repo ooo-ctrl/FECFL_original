@@ -39,6 +39,16 @@ def args_parser():
     parser.add_argument('--partition', type=str, default='noniid-#label2', help='method of partitioning')
     parser.add_argument('--alg', type=str, default='cluster_fl', help='Algorithm')
 
+    # local pair dataset arguments
+    parser.add_argument('--local_root_dir', type=str, default='total', help='root dir for local dataset')
+    parser.add_argument('--local_save_dir', type=str, default='../data/local_pair', help='save dir for local pair data')
+    parser.add_argument('--local_dataset_name', type=str, default='ds1', help='dataset name suffix (e.g., ds1)')
+    parser.add_argument('--local_img_size', type=int, default=32, help='resize size for local images')
+    parser.add_argument('--local_max_pairs_per_class', type=int, default=50, help='max positive pairs per class')
+    parser.add_argument('--local_negative_ratio', type=float, default=1.0, help='negative/positive pair ratio')
+    parser.add_argument('--local_concat_dim', type=str, default='channel', help="concat dim: channel, height, width")
+    parser.add_argument('--local_seed', type=int, default=42, help='random seed for local pair build')
+
     # clustering arguments 
     parser.add_argument('--cluster_alpha', type=float, default=3.5, help="the clustering threshold")
     parser.add_argument('--n_basis', type=int, default=5, help="number of basis per label")
